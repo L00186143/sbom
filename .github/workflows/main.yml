@@ -6,12 +6,11 @@ on:
       - main
 
 jobs:
-  build-and-analyze:
+  build-and-analyse:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+    - uses: actions/checkout@v2
 
     - name: Set up Python
       uses: actions/setup-python@v2
@@ -25,20 +24,21 @@ jobs:
         pip install cyclonedx-bom
 
     - name: Generate SBOM
-      run: cyclonedx-py environment -o bom.xml
+      run: cyclonedx-py -o bom.xml
 
-    - name: Install OWASP Dependency-Check
+    - name: Confirm requirements.txt presence
+      run: |
+        ls -la
+        cat requirements.txt
+
+    - name: Download OWASP Dependency-Check
       run: |
         wget https://github.com/jeremylong/DependencyCheck/releases/download/v6.5.3/dependency-check-6.5.3-release.zip -O dependency-check.zip
         unzip dependency-check.zip
 
-    - name: List directory contents
-      run: ls -la
-
-
     - name: Run OWASP Dependency-Check
       run: |
-        ./dependency-check/bin/dependency-check.sh --project "Flask Hello World" --scan requirements.txt --out . --format HTML
+        ./dependency-check/bin/dependency-check.sh --project "Flask Hello World" --scan ./requirements.txt --out . --format HTML
 
     - name: Upload SBOM as an artifact
       uses: actions/upload-artifact@v2
