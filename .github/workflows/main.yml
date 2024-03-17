@@ -24,7 +24,7 @@ jobs:
         pip install cyclonedx-bom
 
     - name: Generate SBOM
-      run: cyclonedx-py -o bom.xml
+      run: cyclonedx-py environment -o bom.xml
 
     - name: Confirm requirements.txt presence
       run: |
