@@ -1,4 +1,4 @@
-name: Python Project SBOM Generation and Analysis
+name: Python Project Security Workflow
 
 on:
   push:
@@ -6,11 +6,12 @@ on:
       - main
 
 jobs:
-  build-and-analyse:
+  security-check:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout repository
+      uses: actions/checkout@v2
 
     - name: Set up Python
       uses: actions/setup-python@v2
@@ -20,34 +21,26 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install Flask
+        pip install -r requirements.txt
+
+    - name: Install CycloneDX
+      run: |
         pip install cyclonedx-bom
 
     - name: Generate SBOM
-      run: cyclonedx-py environment -o bom.xml
-
-    - name: Confirm requirements.txt presence
       run: |
-        ls -la
-        cat requirements.txt
+        cyclonedx-py environment -o bom.xml
 
-    - name: Download OWASP Dependency-Check
+    - name: Install Safety
       run: |
-        wget https://github.com/jeremylong/DependencyCheck/releases/download/v6.5.3/dependency-check-6.5.3-release.zip -O dependency-check.zip
-        unzip dependency-check.zip
+        pip install safety
 
-    - name: Run OWASP Dependency-Check
+    - name: Run Safety Check
       run: |
-        ./dependency-check/bin/dependency-check.sh --project "Flask Hello World" --scan ./requirements.txt --out . --format HTML
+        safety check -r requirements.txt --full-report
 
     - name: Upload SBOM as an artifact
       uses: actions/upload-artifact@v2
       with:
         name: SBOM
         path: bom.xml
-
-    - name: Upload Dependency-Check Report
-      uses: actions/upload-artifact@v2
-      with:
-        name: Dependency-Check-Report
-        path: dependency-check-report.html
